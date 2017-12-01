@@ -235,54 +235,6 @@ function build_gcc () {
 	package_teardown "gcc"
 }
 
-function build_tcl () {
-	tar xf tcl-core8.6.7-src.tar.gz
-	cd tcl8.6.7
-
-	cd unix
-	package_build
-
-	chmod -v u+w /tools/lib/libtcl8.6.so
-	make install-private-headers
-	ln -s tclsh8.6 /tools/bin/tclsh
-
-	cd ..
-	rm -rf tcl8.6.7
-}
-
-function build_expect () {
-	package_setup "expect"
-
-	cp -v configure{,.orig}
-	sed 's:/usr/local/bin:/bin:' configure.orig > configure
-
-	./configure --prefix=/tools		\
-		--with-tcl=/tools/lib		\
-		--with-tclinclude=/tools/include
-	make
-	make SCRIPTS="" install
-
-	package_teardown "expect"
-}
-
-function build_dejagnu () {
-	package_setup "dejagnu"
-
-	./configure --prefix=/tools
-	make install
-
-	package_teardown "dejagnu"
-}
-
-function build_check () {
-	package_setup "check"
-
-	PKG_CONFIG= ./configure --prefix=/tools
-	make install
-
-	package_teardown "check"
-}
-
 function build_ncurses () {
 	package_setup "ncurses"
 
@@ -504,10 +456,6 @@ build_glibc
 build_libstcpp
 build_binutils
 build_gcc
-build_tcl
-build_expect
-build_dejagnu
-build_check
 build_ncurses
 build_bash
 build_bison

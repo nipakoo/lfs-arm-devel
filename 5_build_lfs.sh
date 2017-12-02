@@ -121,6 +121,19 @@ chmod -v 600  /var/log/btmp
 ##### BUILD FUNCTIONS #####
 ###########################
 
+function build_temporary_perl () {
+	package_setup "perl"
+
+	sh Configure -des -Dprefix=/tools -Dlibs=-lm
+	make
+
+	cp perl cpan/podlators/scripts/pod2man /tools/bin
+	mkdir -p /tools/lib/perl5/5.26.1
+	cp -R lib/* /tools/lib/perl5/5.26.1
+
+	package_teardown "perl"
+}
+
 function build_kernel_headers () {
 	package_setup "linux"
 
@@ -1225,6 +1238,7 @@ function build_kernel () {
 
 cd sources
 
+build_temporary_perl
 build_kernel_headers
 build_man-pages
 build_glibc

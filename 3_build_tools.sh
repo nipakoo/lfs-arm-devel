@@ -5,11 +5,12 @@
 # wget-list used here is downloaded
 # with 2_fetch_sources.sh
 
-source utilities
+cp wget-list ${LFS}
+source utilities.sh
 
 # create dir for installing the tools in
-mkdir ${LFS}/tools
-ln -s ${LFS}/tools /
+#mkdir ${LFS}/tools
+#ln -s ${LFS}/tools /
 
 # general build function for toolset
 function package_build () {
@@ -44,16 +45,13 @@ function build_cross_gcc () {
 	package_setup "gcc"
 
 	for PKG in mpfr gmp mpc; do
-		pushd ..
 		TARBALL=$(parse_tarball ${PKG})
-        	SRCDIR=$(parse_srcdir ${TARBALL})
-		popd
+		SRCDIR=$(parse_srcdir ${TARBALL})
 		tar xf ../${TARBALL}
 		mv ${SRCDIR} ${PKG}
 	done
 
-	# TODO CHECK THE CORRECT DIRS http://www.linuxfromscratch.org/lfs/view/systemd/chapter05/gcc-pass1.html
-	for FILE in gcc/config/{linux,i386/linux{,64}}.h; do
+	for FILE in gcc/config/arm/linux-eabi.h; do
 		cp -uv ${FILE}{,.orig}
 		sed -e 's@/lib\(64\)\?\(32\)\?/ld@/tools&@g' \
 			-e 's@/usr@/tools@g' ${FILE}.orig > ${FILE}
@@ -62,14 +60,8 @@ function build_cross_gcc () {
 #undef STANDARD_STARTFILE_PREFIX_2
 #define STANDARD_STARTFILE_PREFIX_1 "/tools/lib/"
 #define STANDARD_STARTFILE_PREFIX_2 ""' >> ${FILE}
-		touch $file.orig
+		touch ${FILE}.orig
 	done
-	case $(uname -m) in
-		x86_64)
-			sed -e '/m64=/s/lib64/lib/' \
-        			-i.orig gcc/config/i386/t-linux64
-		;;
-	esac
 
 	mkdir build
 	cd build
@@ -183,8 +175,7 @@ function build_gcc () {
 	cat gcc/limitx.h gcc/glimits.h gcc/limity.h > \
 		`dirname $(${LFS_TGT}-gcc -print-libgcc-file-name)`/include-fixed/limits.h
 
-	# TODO CHECK DIRS HERE AS WELL
-	for FILE in gcc/config/{linux,i386/linux{,64}}.h; do
+	for FILE in gcc/config/arm/linux-eabi.h; do
 		cp -uv ${FILE}{,.orig}
 		sed -e 's@/lib\(64\)\?\(32\)\?/ld@/tools&@g' \
 			-e 's@/usr@/tools@g' ${FILE}.orig > ${FILE}
@@ -193,22 +184,14 @@ function build_gcc () {
 #undef STANDARD_STARTFILE_PREFIX_2
 #define STANDARD_STARTFILE_PREFIX_1 "/tools/lib/"
 #define STANDARD_STARTFILE_PREFIX_2 ""' >> ${FILE}
-		touch $file.orig
+		touch ${FILE}.orig
 	done
-	case $(uname -m) in
-		x86_64)
-			sed -e '/m64=/s/lib64/lib/' \
-				-i.orig gcc/config/i386/t-linux64
-		;;
-	esac
 
 	for PKG in mpfr gmp mpc; do
-                pushd ..
                 TARBALL=$(parse_tarball ${PKG})
-                SRCDIR=$(parse_srcdir ${TARBALL})
-                popd
+		SRCDIR=$(parse_srcdir ${TARBALL})
                 tar xf ../${TARBALL}
-                mv ${SRCDIR} ${PKG}
+		mv ${SRCDIR} ${PKG}
         done
 
 	mkdir build
@@ -254,13 +237,15 @@ function build_ncurses () {
 function build_bash () {
 	package_setup "bash"
 
+	patch builtins/psize.sh < ${LFS}/sources/hardcode-PIPESIZE.patch
+
 	./configure --prefix=/tools --without-bash-malloc
 	make
 	make install
 
-	ln -sv bash /tools/bin/sh
+	ln -s bash /tools/bin/sh
 
-	package_teardown "bash"
+#	package_teardown "bash"
 }
 
 function build_bison () {
@@ -381,19 +366,6 @@ function build_patch () {
 	package_teardown "patch"
 }
 
-function build_perl () {
-	package_setup "perl"
-
-	sh Configure -des -Dprefix=/tools -Dlibs=-lm
-	make
-	cp -v perl cpan/podlators/scripts/pod2man /tools/bin
-
-	mkdir -pv /tools/lib/perl5/5.26.1
-	cp -Rv lib/* /tools/lib/perl5/5.26.1
-
-	package_teardown "perl"
-}
-
 function build_sed () {
 	package_setup "sed"
 
@@ -447,7 +419,7 @@ function build_xz () {
 ##### START BUILD #####
 #######################
 
-pushd ${LFS}/sources
+pushd ${LFS}/sources > /dev/null
 
 build_cross_binutils
 build_cross_gcc
@@ -471,14 +443,13 @@ build_gzip
 build_m4
 build_make
 build_patch
-build_perl
 build_sed
 build_tar
 build_texinfo
 build_util-linux
 build_xz
 
-popd
+popd > /dev/null
 
 # strip away debug symbols and docs
 strip --strip-debug /tools/lib/*

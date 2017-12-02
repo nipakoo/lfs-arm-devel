@@ -1,0 +1,6 @@
+hardcode-PIPESIZE.patch
+	Our builds spam a non-fatal error about not being able to preload libraries. This will lead psize.sh
+	to actually write the error message into pipesize.h in addition to the PIPESIZE definition. Hardcode
+	PIPESIZE value for now, in order to proceed with the build.
+
+

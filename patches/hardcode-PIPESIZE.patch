@@ -1,0 +1,14 @@
+--- bash-4.4.12-orig/builtins/psize.sh	2017-12-02 07:31:29.236095795 +0000
++++ bash-4.4.12/builtins/psize.sh	2017-12-02 07:33:31.834914404 +0000
+@@ -36,10 +36,6 @@ $used_mktemp || rm -f "$TMPFILE"
+ 
+ ./psize.aux 2>"$TMPFILE" | sleep 3
+ 
+-if [ -s "$TMPFILE" ]; then
+-	echo "#define PIPESIZE `cat "$TMPFILE"`"
+-else
+-	echo "#define PIPESIZE 512"
+-fi
++echo "#define PIPESIZE 65536"
+ 
+ exit 0

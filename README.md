@@ -13,4 +13,8 @@ Notes:
 - if you stop midst 5_build_lfs.sh and come back to a new session, remember to rerun 4_prepare_lfs.sh
 - while running tests is recommended by LFS documentation these scripts do not run ANY
 
+TODO:
+- add make error checking
+- generalize package_build functions by receiving arguments for configure
+
 This software is provided 'as-is', without any express or implied warranty. In no event will the authors be held liable for any damages arising from the use of this software.

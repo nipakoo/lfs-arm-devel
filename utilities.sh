@@ -2,28 +2,33 @@
 
 function parse_tarball () {
         PKG_NAME=$1
-        echo $(cat wget-list |grep ${PKG_NAME} |head -n 1 |rev |cut -d '/' -f 1 |rev)
+        TARBALL=$(cat ${LFS}/wget-list | rev | cut -d '/' -f 1 | rev | grep ${PKG_NAME}- | head -n 1)
+	if [[ -z $TARBALL ]]; then
+		echo $(cat ${LFS}/wget-list | rev | cut -d '/' -f 1 | rev | grep ${PKG_NAME} | head -n 1)
+		return
+	fi
+	echo $TARBALL
 }
 
 function parse_srcdir () {
         TARBALL=$1
-        if [ -n $(echo ${TARBALL} |grep .src.tar.gz) ]; then
+        if [[ $(echo ${TARBALL} |grep .src.tar.gz) ]]; then
                 echo ${TARBALL%.src.tar.gz}
                 return
         fi
-        if [ -n $(echo ${TARBALL} |grep -src.tar.gz) ]; then
+        if [[ $(echo ${TARBALL} |grep \\-src.tar.gz) ]]; then
                 echo ${TARBALL%-src.tar.gz}
                 return
         fi
-        if [ -n $(echo ${TARBALL} |grep .tar.gz) ]; then
+        if [[ $(echo ${TARBALL} |grep .tar.gz) ]]; then
                 echo ${TARBALL%.tar.gz}
                 return
         fi
-        if [ -n $(echo ${TARBALL} |grep .tar.xz) ]; then
+        if [[ $(echo ${TARBALL} |grep .tar.xz) ]]; then
                 echo ${TARBALL%.tar.xz}
                 return
         fi
-        if [ -n $(echo ${TARBALL} |grep .tar.bz2) ]; then
+        if [[ $(echo ${TARBALL} |grep .tar.bz2) ]]; then
                 echo ${TARBALL%.tar.bz2}
                 return
         fi
@@ -38,7 +43,7 @@ function package_setup () {
 }
 
 function package_teardown () {
-        cd ..
+        cd ${LFS}/sources
         PKG_NAME=$1
         SRCDIR=$(ls |grep ${PKG_NAME} |head -n 1)
         rm -rf ${SRCDIR}

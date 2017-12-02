@@ -18,6 +18,8 @@ if [ -h ${LFS}/dev/shm ]; then
 fi
 
 cp 5_build_lfs.sh ${LFS}/tools
+cp 6_configure_lfs.sh ${LFS}/tools
+cp 7_finalize.sh ${LFS}/tools
 cp utilities.sh ${LFS}/tools
 
 chroot "${LFS}" /tools/bin/env -i             \

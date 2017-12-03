@@ -16,5 +16,5 @@ umount ${LFS}/sys
 
 umount ${LFS}
 
-shutdown -r now
+/sbin/shutdown -r now
 

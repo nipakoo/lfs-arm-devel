@@ -2,7 +2,7 @@
 
 function parse_tarball () {
         PKG_NAME=$1
-        TARBALL=$(cat ${LFS}/wget-list | rev | cut -d '/' -f 1 | rev | grep ${PKG_NAME}- | head -n 1)
+        TARBALL=$(cat ${LFS}/wget-list | rev | cut -d '/' -f 1 | rev | grep ^${PKG_NAME}- | head -n 1)
 	if [[ -z $TARBALL ]]; then
 		echo $(cat ${LFS}/wget-list | rev | cut -d '/' -f 1 | rev | grep ${PKG_NAME} | head -n 1)
 		return

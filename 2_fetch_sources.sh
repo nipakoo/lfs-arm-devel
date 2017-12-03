@@ -10,7 +10,6 @@ mount -t ext4 ${TARGET_PARTITION} ${LFS}
 
 # fetch needed sources and leave wget-list for future use
 mkdir ${LFS}/sources
-curl -O http://www.linuxfromscratch.org/lfs/view/systemd/wget-list
 wget --input-file=wget-list --continue --directory-prefix=${LFS}/sources
 
 # verify source checksums

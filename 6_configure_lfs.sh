@@ -147,7 +147,7 @@ NAME="Linux From Scratch"
 VERSION="20171126-systemd"
 ID=lfs
 PRETTY_NAME="Linux From Scratch 20171126-systemd"
-VERSION_CODENAME="nipakoo"
+VERSION_CODENAME="albertinos"
 EOF
 
 echo 20171126-systemd > /etc/lfs-release
@@ -155,7 +155,7 @@ echo 20171126-systemd > /etc/lfs-release
 cat > /etc/lsb-release << "EOF"
 DISTRIB_ID="Linux From Scratch"
 DISTRIB_RELEASE="20171126-systemd"
-DISTRIB_CODENAME="nipakoo"
+DISTRIB_CODENAME="albertinos"
 DISTRIB_DESCRIPTION="Linux From Scratch"
 EOF
 

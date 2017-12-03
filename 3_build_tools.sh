@@ -2,9 +2,6 @@
 
 # USAGE EXAMPLE: ./3_build_tools.sh
 
-# wget-list used here is downloaded
-# with 2_fetch_sources.sh
-
 cp wget-list ${LFS}
 source utilities.sh
 
@@ -164,7 +161,7 @@ function build_binutils () {
 
 	make -C ld clean
 	make -C ld LIB_PATH=/usr/lib:/lib
-	cp -v ld/ld-new /tools/bin
+	cp ld/ld-new /tools/bin
 
 	package_teardown "binutils"
 }

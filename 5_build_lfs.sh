@@ -1,10 +1,15 @@
 #!/bin/bash
 
-# USAGE EXAMPLE: ./5_build_lfs.sh salainen
+# USAGE EXAMPLE: ./5_build_lfs.sh
 
-export ROOT_PASSWORD=$1
+# NOTE!
+# After finishing build shadow, a password is set for the
+# root user. The build will halt at this time and wait for
+# user input.
 
-source utilities
+export MAKEFLAGS='-j 4'
+
+source utilities.sh
 
 # general build function for native lfs build
 function package_build () {
@@ -13,52 +18,50 @@ function package_build () {
         make install
 }
 
-# create standard directory tree
-mkdir -p /{bin,boot,etc/{opt,sysconfig},home,lib/firmware,mnt,opt}
-mkdir -p /{media/{floppy,cdrom},sbin,srv,var}
-install -d -m 0750 /root
-install -d -m 1777 /tmp /var/tmp
-mkdir -p /usr/{,local/}{bin,include,lib,sbin,src}
-mkdir -p /usr/{,local/}share/{color,dict,doc,info,locale,man}
-mkdir /usr/{,local/}share/{misc,terminfo,zoneinfo}
-mkdir /usr/libexec
-mkdir -p /usr/{,local/}share/man/man{1..8}
+function prepare_lfs () {
 
-case $(uname -m) in
- x86_64) mkdir /lib64 ;;
-esac
+	# create standard directory tree
+	mkdir -p /{boot,etc/{opt,sysconfig},home,lib/firmware,mnt,opt}
+	mkdir -p /{media/{floppy,cdrom},sbin,srv,var}
+	install -d -m 0750 /root
+	install -d -m 1777 /tmp /var/tmp
+	mkdir -p /usr/{,local/}{bin,include,lib,sbin,src}
+	mkdir -p /usr/{,local/}share/{color,dict,doc,info,locale,man}
+	mkdir /usr/{,local/}share/{misc,terminfo,zoneinfo}
+	mkdir /usr/libexec
+	mkdir -p /usr/{,local/}share/man/man{1..8}
 
-mkdir /var/{log,mail,spool}
-ln -s /run /var/run
-ln -s /run/lock /var/lock
-mkdir -p /var/{opt,cache,lib/{color,misc,locate},local}
+	mkdir /var/{log,mail,spool}
+	ln -s /run /var/run
+	ln -s /run/lock /var/lock
+	mkdir -p /var/{opt,cache,lib/{color,misc,locate},local}
 
-# create symlinks to our temporary tools
-ln -s /tools/bin/{bash,cat,dd,echo,ln,pwd,rm,stty} /bin
-ln -s /tools/bin/{env,install,perl} /usr/bin
-ln -s /tools/lib/libgcc_s.so{,.1} /usr/lib
-ln -s /tools/lib/libstdc++.{a,so{,.6}} /usr/lib
-sed 's/tools/usr/' /tools/lib/libstdc++.la > /usr/lib/libstdc++.la
-for LIB in blkid lzma mount uuid
-do
-    ln -s /tools/lib/lib${LIB}.so* /usr/lib
-    sed 's/tools/usr/' /tools/lib/lib${LIB}.la > /usr/lib/lib${LIB}.la
-done
-ln -sf /tools/include/blkid    /usr/include
-ln -sf /tools/include/libmount /usr/include
-ln -sf /tools/include/uuid     /usr/include
-install -dm755 /usr/lib/pkgconfig
-for PC in blkid mount uuid
-do
-    sed 's@tools@usr@g' /tools/lib/pkgconfig/${PC}.pc \
-        > /usr/lib/pkgconfig/${PC}.pc
-done
-ln -sv bash /bin/sh
+	# create symlinks to our temporary tools
+	ln -s /tools/bin/{cat,dd,echo,ln,pwd,rm,stty} /bin
+	ln -s /tools/bin/{env,install,perl} /usr/bin
+	ln -s /tools/lib/libgcc_s.so{,.1} /usr/lib
+	ln -s /tools/lib/libstdc++.{a,so{,.6}} /usr/lib
+	sed 's/tools/usr/' /tools/lib/libstdc++.la > /usr/lib/libstdc++.la
+	for LIB in blkid lzma mount uuid
+	do
+		ln -s /tools/lib/lib${LIB}.so* /usr/lib
+		sed 's/tools/usr/' /tools/lib/lib${LIB}.la > /usr/lib/lib${LIB}.la
+	done
+	ln -sf /tools/include/blkid    /usr/include
+	ln -sf /tools/include/libmount /usr/include
+	ln -sf /tools/include/uuid     /usr/include
+	install -dm755 /usr/lib/pkgconfig
+	for PC in blkid mount uuid
+	do
+	sed 's@tools@usr@g' /tools/lib/pkgconfig/${PC}.pc \
+		> /usr/lib/pkgconfig/${PC}.pc
+	done
+	ln -s bash /bin/sh
 
-# finalize setup
-ln -sv /proc/self/mounts /etc/mtab
+	# finalize setup
+	ln -s /proc/self/mounts /etc/mtab
 
-cat > /etc/passwd << "EOF"
+	cat > /etc/passwd << "EOF"
 root:x:0:0:root:/root:/bin/bash
 bin:x:1:1:bin:/dev/null:/bin/false
 daemon:x:6:6:Daemon User:/dev/null:/bin/false
@@ -76,7 +79,7 @@ EOF
 
 
 
-cat > /etc/group << "EOF"
+	cat > /etc/group << "EOF"
 root:x:0:
 bin:x:1:daemon
 sys:x:2:
@@ -110,29 +113,18 @@ nogroup:x:99:
 users:x:999:
 EOF
 
-exec /tools/bin/bash --login +h
+	exec /tools/bin/bash --login +h
 
-touch /var/log/{btmp,lastlog,faillog,wtmp}
-chgrp -v utmp /var/log/lastlog
-chmod -v 664  /var/log/lastlog
-chmod -v 600  /var/log/btmp
+	touch /var/log/{btmp,lastlog,faillog,wtmp}
+	chgrp -v utmp /var/log/lastlog
+	chmod -v 664  /var/log/lastlog
+	chmod -v 600  /var/log/btmp
+
+}
 
 ###########################
 ##### BUILD FUNCTIONS #####
 ###########################
-
-function build_temporary_perl () {
-	package_setup "perl"
-
-	sh Configure -des -Dprefix=/tools -Dlibs=-lm
-	make
-
-	cp perl cpan/podlators/scripts/pod2man /tools/bin
-	mkdir -p /tools/lib/perl5/5.26.1
-	cp -R lib/* /tools/lib/perl5/5.26.1
-
-	package_teardown "perl"
-}
 
 function build_kernel_headers () {
 	package_setup "linux"
@@ -159,16 +151,8 @@ function build_glibc () {
 	patch -Np1 -i ../glibc-2.26-fhs-1.patch
 	ln -sf /tools/lib/gcc /usr/lib
 
-	# TODO CHECK THESE DIRS
-	case $(uname -m) in
-		i?86)    GCC_INCDIR=/usr/lib/gcc/$(uname -m)-pc-linux-gnu/7.2.0/include
-			ln -sfv ld-linux.so.2 /lib/ld-lsb.so.3
-		;;
-		x86_64) GCC_INCDIR=/usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include
-			ln -sfv ../lib/ld-linux-x86-64.so.2 /lib64
-			ln -sfv ../lib/ld-linux-x86-64.so.2 /lib64/ld-lsb-x86-64.so.3
-		;;
-	esac
+	GCC_INCDIR=/usr/lib/gcc/$(uname -m)-lfs-linux-gnueabihf/7.2.0/include
+	ln -sf ld-linux.so.2 /lib/ld-lsb.so.3
 
 	rm -f /usr/include/limits.h
 	mkdir build
@@ -184,7 +168,7 @@ function build_glibc () {
 	make
 	
 	touch /etc/ld.so.conf
-	sed '/test-installation/s@$(PERL)@echo not running@' -i ../Makefile
+	sed '/test-installation//' -i ../Makefile
 	make install
 
 	cp ../nscd/nscd.conf /etc/nscd.conf
@@ -227,7 +211,7 @@ EOF
 	zic -d ${ZONEINFO} -p Europe/Helsinki
 	unset ZONEINFO
 
-	ln -sf /usr/share/zoneinfo/<xxx> /etc/localtime
+	ln -sf /usr/share/zoneinfo/Europe/Helsinki /etc/localtime
 
 	cat > /etc/ld.so.conf << "EOF"
 # Begin /etc/ld.so.conf
@@ -236,7 +220,8 @@ EOF
 
 EOF
 
-	
+	mkdir -p /usr/lib/locale
+	localedef -i en_US -f UTF-8 en_US.UTF-8
 
 	package_teardown "glibc"
 }
@@ -246,7 +231,7 @@ function build_zlib () {
 
 	package_build
 	mv /usr/lib/libz.so.* /lib
-	ln -sf ../../lib/$(readlink /usr/lib/libz.so) /usr/lib/libz.so
+	ln -sf /lib/libz.so /usr/lib/libz.so
 
 	package_teardown "zlib"
 }
@@ -272,8 +257,8 @@ function build_readline () {
 	make SHLIB_LIBS="-L/tools/lib -lncurses" install
 
 	mv /usr/lib/lib{readline,history}.so.* /lib
-	ln -sf ../../lib/$(readlink /usr/lib/libreadline.so) /usr/lib/libreadline.so
-	ln -sf ../../lib/$(readlink /usr/lib/libhistory.so ) /usr/lib/libhistory.so
+	ln -sf /lib/libreadline.so /usr/lib/libreadline.so
+	ln -sf /lib/libhistory.so /usr/lib/libhistory.so
 
 	package_teardown "readline"
 }
@@ -284,6 +269,19 @@ function build_m4 () {
 	package_build
 
 	package_teardown "m4"
+}
+
+function build_temporary_perl () {
+	package_setup "perl"
+
+	sh Configure -des -Dprefix=/tools -Dlibs=-lm
+	make
+
+	cp perl cpan/podlators/scripts/pod2man /tools/bin
+	mkdir -p /tools/lib/perl5/5.26.1
+	cp -R lib/* /tools/lib/perl5/5.26.1
+
+	package_teardown "perl"
 }
 
 function build_bc () {
@@ -328,7 +326,8 @@ function build_binutils () {
 		--enable-plugins    \
 		--enable-shared     \
 		--disable-werror    \
-		--with-system-zlib
+		--with-system-zlib  \
+		--with-zlib=/usr
 	make tooldir=/usr
 	make tooldir=/usr install
 
@@ -354,6 +353,7 @@ function build_mpfr () {
 	./configure --prefix=/usr        \
 		--disable-static     \
 		--enable-thread-safe \
+		--with-gmp=/usr \
 		--docdir=/usr/share/doc/mpfr-3.1.6
 	make
 	make install
@@ -366,6 +366,7 @@ function build_mpc () {
 
 	./configure --prefix=/usr    \
 		--disable-static \
+		--with-gmp=/usr \
 		--docdir=/usr/share/doc/mpc-1.0.3
 	make
 	make install
@@ -376,8 +377,6 @@ function build_mpc () {
 function build_gcc () {
 	package_setup "gcc"
 
-	# TODO CHECK IF NEED TO CHANGE DEFAULT LIB DIR NAME http://www.linuxfromscratch.org/lfs/view/systemd/chapter06/gcc.html
-	
 	rm -f /usr/lib/gcc
 	mkdir build
 	cd build
@@ -387,7 +386,11 @@ function build_gcc () {
 		--enable-languages=c,c++ \
 		--disable-multilib       \
 		--disable-bootstrap      \
-		--with-system-zlib
+		--with-gmp=/usr          \
+		--with-mpfr=/usr         \
+		--with-mpc=/usr          \
+		--with-system-zlib       \
+		--with-zlib=/usr
 	make
 	make install
 
@@ -452,7 +455,7 @@ function build_ncurses () {
 	make install
 
 	mv -v /usr/lib/libncursesw.so.6* /lib
-	ln -sf ../../lib/$(readlink /usr/lib/libncursesw.so) /usr/lib/libncursesw.so
+	ln -sf /lib/libncursesw.so /usr/lib/libncursesw.so
 
 	for LIB in ncurses form panel menu ; do
     		rm -f                     /usr/lib/lib${LIB}.so
@@ -477,7 +480,8 @@ function build_attr () {
 
 	chmod -v 755 /usr/lib/libattr.so
 	mv /usr/lib/libattr.so.* /lib
-	ln -sf ../../lib/$(readlink /usr/lib/libattr.so) /usr/lib/libattr.so
+	ln -sf /lib/libattr.so /usr/lib/libattr.so
+	ln -sf libattr.so.1 /lib/libattr.so
 
 	package_teardown "attr"
 }
@@ -491,13 +495,13 @@ function build_acl () {
 
 	./configure --prefix=/usr    \
 		--disable-static \
-	--libexecdir=/usr/lib
+		--libexecdir=/usr/lib
 	make
 	make install install-dev install-lib
 
 	chmod -v 755 /usr/lib/libacl.so
 	mv /usr/lib/libacl.so.* /lib
-	ln -sf ../../lib/$(readlink /usr/lib/libacl.so) /usr/lib/libacl.so
+	ln -sf /lib/libacl.so /usr/lib/libacl.so
 
 	package_teardown "acl"
 }
@@ -512,7 +516,8 @@ function build_libcap () {
 	
 	chmod -v 755 /usr/lib/libcap.so
 	mv /usr/lib/libcap.so.* /lib
-	ln -sf ../../lib/$(readlink /usr/lib/libcap.so) /usr/lib/libcap.so
+	ln -sf /lib/libcap.so /usr/lib/libcap.so
+	ln -sf libcap.so.2 /lib/libcap.so
 
 	package_teardown "libcap"
 }
@@ -549,7 +554,7 @@ function build_shadow () {
 	grpconv
 
 	sed -i 's/yes/no/' /etc/default/useradd
-	echo "${ROOT_PASSWORD}" |passwd root
+	passwd root
 
 	package_teardown "shadow"
 }
@@ -754,7 +759,8 @@ function build_xz () {
 
 	mv /usr/bin/{lzma,unlzma,lzcat,xz,unxz,xzcat} /bin
 	mv /usr/lib/liblzma.so.* /lib
-	ln -sf ../../lib/$(readlink /usr/lib/liblzma.so) /usr/lib/liblzma.so
+	ln -sf /lib/liblzma.so /usr/lib/liblzma.so
+	ln -sf liblzma.so.5 /lib/liblzma.so
 
 	package_teardown "xz"
 }
@@ -880,7 +886,7 @@ function build_systemd () {
 	LANG=en_US.UTF-8 ninja
 	LANG=en_US.UTF-8 ninja install
 
-	rm -rfv /usr/lib/rpm
+	rm -rf /usr/lib/rpm
 	
 	for TOOL in runlevel reboot shutdown poweroff halt telinit; do
 		ln -sfv ../bin/systemctl /sbin/${TOOL}
@@ -894,7 +900,7 @@ function build_systemd () {
 #!/bin/bash
 rm -f /run/nologin
 EOF
-	chmod 755 /lib/systemd/systemd-user-sessio
+	chmod 755 /lib/systemd/systemd-user-sessions
 
 	package_teardown "systemd"
 }
@@ -913,7 +919,7 @@ function build_procps-ng () {
 	make install
 
 	mv /usr/lib/libprocps.so.* /lib
-	ln -sf ../../lib/$(readlink /usr/lib/libprocps.so) /usr/lib/libprocps.so
+	ln -sf /lib/libprocps.so /usr/lib/libprocps.so
 
 	package_teardown "procps-ng"
 }
@@ -957,10 +963,10 @@ function build_coreutils () {
 	FORCE_UNSAFE_CONFIGURE=1 make
 	make install
 
-	mv /usr/bin/{cat,chgrp,chmod,chown,cp,date,dd,df,echo} /bin
-	mv /usr/bin/{false,ln,ls,mkdir,mknod,mv,pwd,rm} /bin
-	mv /usr/bin/{rmdir,stty,sync,true,uname} /bin
-	mv /usr/bin/chroot /usr/sbin
+	mv /usr/bin/{cat,chgrp,chmod,chown,cp,date,dd,df,echo} /bin/
+	mv /usr/bin/{false,ln,ls,mkdir,mknod,mv,pwd,rm} /bin/
+	mv /usr/bin/{rmdir,stty,sync,true,uname} /bin/
+	mv /usr/bin/chroot /usr/sbin/
 	mv /usr/share/man/man1/chroot.1 /usr/share/man/man8/chroot.8
 	sed -i s/\"1\"/\"8\"/1 /usr/share/man/man8/chroot.8
 	mv /usr/bin/{head,sleep,nice} /bin
@@ -1001,7 +1007,7 @@ function build_findutils () {
 function build_groff () {
 	package_setup "groff"
 
-	PAGE=<paper_size> ./configure --prefix=/usr
+	PAGE=A4 ./configure --prefix=/usr
 	make -j1
 	make install
 
@@ -1109,7 +1115,7 @@ function build_dbus () {
 	make install
 
 	mv /usr/lib/libdbus-1.so.* /lib
-	ln -sf ../../lib/$(readlink /usr/lib/libdbus-1.so) /usr/lib/libdbus-1.so
+	ln -sf /lib/libdbus-1.so /usr/lib/libdbus-1.so
 	ln -sf /etc/machine-id /var/lib/dbus
 
 	package_teardown "dbus"
@@ -1218,13 +1224,11 @@ function build_kernel () {
 	package_setup "linux"
 
 	make mrproper
-	make bcm2709_defconfig
+	make bcm2835_defconfig
 
 	make -j4 zImage modules dtbs
 	make modules_install
 	cp arch/arm/boot/dts/*.dtb /boot/
-	cp arch/arm/boot/dts/overlays/*.dtb* /boot/overlays/
-	cp arch/arm/boot/dts/overlays/README /boot/overlays/
 	cp arch/arm/boot/zImage /boot/vmlinuz-4.14-lfs-20171126-systemd
 	cp System.map /boot/System.map-4.14
 	cp .config /boot/config-4.14
@@ -1236,18 +1240,19 @@ function build_kernel () {
 ##### START BUILD #####
 #######################
 
-cd sources
+prepare_lfs
 
-build_temporary_perl
+cd /sources
+
 build_kernel_headers
 build_man-pages
 build_glibc
 
 # adjust toolchain to use new c libraries
 mv /tools/bin/{ld,ld-old}
-mv /tools/$(uname -m)-pc-linux-gnu/bin/{ld,ld-old}
+mv /tools/$(uname -m)-lfs-linux-gnueabihf/bin/{ld,ld-old}
 mv /tools/bin/{ld-new,ld}
-ln -s /tools/bin/ld /tools/$(uname -m)-pc-linux-gnu/bin/ld
+ln -s /tools/bin/ld /tools/$(uname -m)-lfs-linux-gnueabihf/bin/ld
 
 gcc -dumpspecs | sed -e 's@/tools@@g'                   \
     -e '/\*startfile_prefix_spec:/{n;s@.*@/usr/lib/ @}' \
@@ -1258,6 +1263,7 @@ build_zlib
 build_file
 build_readline
 build_m4
+build_temporary_perl
 build_bc
 build_binutils
 build_gmp
@@ -1332,4 +1338,6 @@ cd ..
 
 rm -rf sources
 rm -rf tools
+
+/bin/cp 6_configure_lfs ${LFS}
 

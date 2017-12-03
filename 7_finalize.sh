@@ -18,7 +18,7 @@ sed -i "s/$ROOT/\/dev\/mmcblk0p3/g" /boot/cmdline.txt
 
 cat > ${LFS}/etc/fstab << "EOF"
 proc               /proc     proc     defaults             0   0
-/dev/mmcblk0p1     /boot     vfat4    defaults             0   2
+/dev/mmcblk0p1     /boot     vfat    defaults             0   2
 /dev/mmcblk0p3     /         ext4     defaults,noatime     0   1
 EOF
 

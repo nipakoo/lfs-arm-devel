@@ -25,6 +25,10 @@ cp utilities.sh ${LFS}/tools
 mkdir -p ${LFS}/bin
 ln -s ../tools/bin/bash ${LFS}/bin/bash
 
+git clone --depth=1 https://github.com/raspberrypi/linux
+mkdir -p ${LFS}/sources/KERNEL
+mv linux ${LFS}/sources/KERNEL/
+
 chroot "${LFS}" /tools/bin/env -i             \
 		HOME=/root                  \
 		TERM="${TERM}"                \

@@ -1207,20 +1207,25 @@ EOF
 }
 
 function build_kernel () {
-	package_setup "linux"
+	cd /sources/KERNEL/linux
 
 	KERNEL=kernel7
-	make bcm2835_defconfig
+	make bcm2709_defconfig
 
 	make -j4 zImage modules dtbs
 	make modules_install
 
 	cp arch/arm/boot/dts/*.dtb /boot/
 	cp arch/arm/boot/zImage /boot/$KERNEL.img
-	cp System.map /boot/System.map-4.14
-	cp .config /boot/config-4.14
 
-	package_teardown "linux"
+	mkdir -p /boot/overlays
+	cp arch/arm/boot/dts/overlays/*.dtb* /boot/overlays/
+	cp arch/arm/boot/dts/overlays/README /boot/overlays/
+	cp System.map /boot/System.map-4.9
+	cp .config /boot/config-4.9
+
+	cd /sources
+	rm -rf KERNEL
 }
 
 #######################

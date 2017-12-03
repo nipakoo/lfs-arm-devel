@@ -159,4 +159,4 @@ DISTRIB_CODENAME="albertinos"
 DISTRIB_DESCRIPTION="Linux From Scratch"
 EOF
 
-logout
+exit

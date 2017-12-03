@@ -6,8 +6,8 @@ cp wget-list ${LFS}
 source utilities.sh
 
 # create dir for installing the tools in
-#mkdir ${LFS}/tools
-#ln -s ${LFS}/tools /
+mkdir ${LFS}/tools
+ln -s ${LFS}/tools /
 
 # general build function for toolset
 function package_build () {

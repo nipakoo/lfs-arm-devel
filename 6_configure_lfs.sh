@@ -125,22 +125,6 @@ cat > /etc/fstab << "EOF"
 # End /etc/fstab
 EOF
 
-# configure grub
-grub-install /dev/sdd
-
-cat > /boot/grub/grub.cfg << "EOF"
-# Begin /boot/grub/grub.cfg
-set default=0
-set timeout=5
-
-insmod ext2
-set root=(hd0,2)
-
-menuentry "GNU/Linux, Linux 4.14-lfs-20171126-systemd" {
-        linux   /boot/vmlinuz-4.14-lfs-20171126-systemd root=/dev/sdd2 ro
-}
-EOF
-
 # write release files
 cat > /etc/os-release << "EOF"
 NAME="Linux From Scratch"

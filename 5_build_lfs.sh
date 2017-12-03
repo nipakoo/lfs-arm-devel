@@ -1014,20 +1014,6 @@ function build_groff () {
 	package_teardown "groff"
 }
 
-function build_grub () {
-	package_setup "grub"
-
-	./configure --prefix=/usr          \
-		--sbindir=/sbin        \
-		--sysconfdir=/etc      \
-		--disable-efiemu       \
-		--disable-werror
-	make
-	make install
-
-	package_teardown "grub"
-}
-
 function build_less () {
 	package_setup "less"
 
@@ -1223,13 +1209,14 @@ EOF
 function build_kernel () {
 	package_setup "linux"
 
-	make mrproper
+	KERNEL=kernel7
 	make bcm2835_defconfig
 
 	make -j4 zImage modules dtbs
 	make modules_install
+
 	cp arch/arm/boot/dts/*.dtb /boot/
-	cp arch/arm/boot/zImage /boot/vmlinuz-4.14-lfs-20171126-systemd
+	cp arch/arm/boot/zImage /boot/$KERNEL.img
 	cp System.map /boot/System.map-4.14
 	cp .config /boot/config-4.14
 
@@ -1309,7 +1296,6 @@ build_diffutils
 build_gawk
 build_findutils
 build_groff
-build_grub
 build_less
 build_gzip
 build_iproute

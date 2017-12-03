@@ -4,7 +4,7 @@ Everything here is based on the Linux From Scratch project documentation http://
 
 Usage:
 - run scripts in ascending order as root
-- use another linux system to prepare a target partition for installation on your sd card
+- use another linux system to prepare a target partition for installation on your sd card, we need around 6GB partition in /dev/mmcblk0p3
 - run the second to the fifth scripts (1_set_env.sh, 2_fetch_sources.sh, 3_build_tools.sh, 4_prepare_lfs.sh) on an already installed linux system on the target device
 - run the fifth and the sixth scripts (5_build_lfs.sh and 6_configure_lfs.sh) in a chroot of target system
 - run the seventh script (7_finalize.sh) in the host system to unmount the virtual file systems and reboot

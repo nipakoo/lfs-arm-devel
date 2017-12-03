@@ -1,12 +1,10 @@
 #!/bin/bash
 
-# USAGE EXAMPLE: ./2_fetch_sources.sh /dev/mmcblk0p3
-
-TARGET_PARTITION=$1
+# USAGE EXAMPLE: ./2_fetch_sources.sh
 
 # mount the target device
 mkdir -p ${LFS}
-mount -t ext4 ${TARGET_PARTITION} ${LFS}
+mount -t ext4 /dev/mmcblk0p3 ${LFS}
 
 # fetch needed sources and leave wget-list for future use
 mkdir ${LFS}/sources
